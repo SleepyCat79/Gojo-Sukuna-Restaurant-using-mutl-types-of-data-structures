@@ -1,101 +1,79 @@
+#include <iostream>
+#include<bits/stdc++.h>
 
-
-// C++ implementation to
-// print the characters and
-// frequencies in order
-// of its occurrence
-#include <bits/stdc++.h>
 using namespace std;
 
-template <typename E>
-class HuffNode{
-    public: 
-    virtual ~HuffNode(){}
-    virtual int weight()=0;
-    virtual bool isLeaf()=0;
-};
-template <typename E>
-class LeafNode: public HuffNode<E>{
-    private:
-    E it;
-    int wgt;
-    public:
-    LeafNode(const E& val,int freq): it(val),wtg(freq);
-    int weight(){return wgt;}
-    E val(){return it;}
-    bool isLeaf(){return true;}
-};
-template <typename E>
-class IntlNode: public HuffNode<E>{
-    private:
-    HuffNode<E>* lc;
-    HuffNode<E>* rc;
-    int wgt;
-    public:
-    IntlNode(HuffNode<E>* L,HuffNode<E>* r): wgt(l->weight()+r->weight()),lc(l),rc(r){}
-    int weight(){return wgt;}
-    bool isLeaf(){return true;}
-    HuffNode<E>* left() const{return lc;}
-    void setLeft(HuffNode<E>* b){lc = b;}
-    HuffNode<E>* left() const{return rc;}
-    void setRight(HuffNode<E>* b){rc = b;}
+
+struct HuffmanNode {
+    char data;
+    int frequency;
+    HuffmanNode* left;
+    HuffmanNode* right;
+
+    // Constructor
+    HuffmanNode(char d, int freq) : data(d), frequency(freq), left(nullptr), right(nullptr) {}
 };
 
-template <typename E>
-class HuffTree{
-    private:
-    HuffNode<E>* Root;
-    public:
-    HuffTree(E& val, int freq) : Root(new LeafNode<E>(val,freq)){}
-    HuffTree(HuffTree<E>* L, HuffTree<E>* r): Root(new IntlNode<E>(l->root(), r->root())){}
-    ~HuffTree(){delete Root;}
-    HuffNode<E>* root(){return Root;}
-    int weight(){return Root->weight();}
-};
-
-template <typename E>
-struct minTreecomp{
-    bool operator()(const HuffTree<E>* x, const HuffTree<E>* Y) const{
-        return x->weight()>y->weight();
+struct CompareNodes {
+    bool operator()(HuffmanNode* lhs, HuffmanNode* rhs) {
+        return lhs->frequency >= rhs->frequency; // Min-heap based on frequency
     }
 };
-
-template <typename E>
-HuffTree<E>* buildHuff(unordered_map<E, int>& freq){
-    priority_queue<HuffTree<E>*, vector<HuffTree<E>*>, minTreecomp<E>> forest;
-    for(auto& pair: freq){
-        forest,push(new HuffTree<E>(pair.first,pair.second));
-    }
-    whille(forest.size()>1){
-        HuffTree<E>* temp1 = forest.top();
-        forest.pop();
-        HuffTree<E>* temp2 = forest.top();
-        forest.pop();
-        forest.push(new HuffTree<E>(temp1, temp2));
-    }
-    return forest.top();
-};
-
-void sortmap(unordered_map<char, int>&freq) {
-    unordered_map<int, vector<char>> sortedFreq;
-
-    for (auto& pair : freq) {
-        sortedFreq[pair.second].push_back(pair.first);
+HuffmanNode* buildHuffmanTree(vector<pair<char,int>>frequencymap) {
+    priority_queue<HuffmanNode*, vector<HuffmanNode*>, CompareNodes> pq;
+    for (const auto& pair : frequencymap) {
+        HuffmanNode* node = new HuffmanNode(pair.first, pair.second);
+        pq.push(node);
     }
 
-    for (auto& pair : sortedFreq) {
-        sort(pair.second.begin(), pair.second.end());
+    while (pq.size() > 1) {
+        HuffmanNode* leftChild = pq.top();
+        pq.pop();
+        HuffmanNode* rightChild = pq.top();
+        pq.pop();
+
+        HuffmanNode* internalNode = new HuffmanNode('\0', leftChild->frequency + rightChild->frequency);
+        internalNode->left = leftChild;
+        internalNode->right = rightChild;
+
+        pq.push(internalNode);
     }
 
-    freq.clear();
-
-    for (auto& pair : sortedFreq) {
-        for (char c : pair.second) {
-            freq[c] = pair.first;
-        }
-    }
+    return pq.top();
 }
 
+void encode(HuffmanNode* root, string str,
+			unordered_map<char, string> &huffmanCode){
+	if (root == nullptr)
+		return;
+
+	// found a leaf node
+	if (!root->left && !root->right) {
+		huffmanCode[root->data] = str;
+	}
+
+	encode(root->left, str + "0", huffmanCode);
+	encode(root->right, str + "1", huffmanCode);
+}
+
+
+vector<pair<char,int>> sortmap(unordered_map<char, int>freq,string name ){
+    vector<pair<char,int>>sortfreq(freq.begin(),freq.end());
+    sort(sortfreq.begin(),sortfreq.end(),
+        [&name](pair<char,int>a,pair<char,int>b){
+            return (a.second==b.second) ? name.find(a.first)<name.find(b.first) : a.second<b.second;
+        });
+    return sortfreq;
+}
+void printHuffmanCodes(HuffmanNode* root, string code = "") {
+    if (root) {
+        if (root->data != '\0') {
+            cout << root->data << ": " << code << endl;
+        }
+        printHuffmanCodes(root->left, code + "0");
+        printHuffmanCodes(root->right, code + "1");
+    }
+}
 void LAPSE(string name){
 	int size = name.length();
 	if(size<=3) return;
@@ -104,22 +82,56 @@ void LAPSE(string name){
 		if(name[i]==' ') continue;
 		freq[name[i]]++;
 	}
-	sortmap(freq);
-	unordered_map<char,int>x;
-	for(const auto& pair:freq){
+	vector<pair<char,int>>sortfreq= sortmap(freq,name);
+	vector<pair<char,int>>x;
+    string caesarname = "";
+    for(int i =0;i<size;i++){
+        char tmpc = name[i];
+        if (islower(tmpc)) {
+            caesarname += (tmpc - 'a' + freq[tmpc]) % 26 + 'a';
+        } 
+        else if (isupper(tmpc)) {
+            caesarname += (tmpc - 'A' + freq[tmpc]) % 26 + 'A';
+        }
+    }
+	for(auto pair:sortfreq){
 		char orgi = pair.first;
 		int frequency=pair.second;
-		char caesar = (orgi-'a'+frequency) % 26 + 'a';
-		x[caesar]=frequency;
+		char caesar;
+        if (islower(orgi)) {
+            caesar = (orgi - 'a' + frequency) % 26 + 'a';
+        } 
+        else if (isupper(orgi)) {
+            caesar = (orgi - 'A' + frequency) % 26 + 'A';
+        }
+		x.emplace_back(caesar, frequency);
 	}
+    HuffmanNode* huffmanroot = buildHuffmanTree(x);
+    unordered_map<char, string> huffmanCode;
+    encode(huffmanroot,"",huffmanCode);
+    string str = "";
+	for (char ch: caesarname) {
+		str += huffmanCode[ch];
+	}
+    int result;
+    if(str.size()<10){
+        for(int i = str.size();i>0;i++){
+            result+=str[i];
+        }
+    }
+    else{
+        
+    }
 
 }
- 
-// Driver Code
-int main()
-{
-    string s = "Vo Nguyen Gia Huy";
+
+// Main function
+int main() {
+    // Example frequency table (character, frequency)
+
+    // Build the Huffman tree
+    string s = "aaabbcccDD";
     LAPSE(s);
+
+    return 0;
 }
- 
-// This code is contributed by rutvik_56
