@@ -213,7 +213,17 @@ void simulate(string filename)
 	cout << "Good Luck";
 	return;
 }
-
+vector<int> BSTtoPostOrder(GojoBST* root) {
+    vector<int> arr;
+    if (root) {
+        vector<int> left = BSTtoPostOrder(root->left);
+        vector<int> right = BSTtoPostOrder(root->right);
+        arr.insert(arr.end(), left.begin(), left.end());
+        arr.insert(arr.end(), right.begin(), right.end());
+        arr.push_back(root->key);
+    }
+    return arr;
+}
 void LAPSE(string name){
 	int size = name.length();
 	unordered_map<char,int>freq;
@@ -262,6 +272,12 @@ void LIMITLESS(int NUM){
     } 
     else {
         return;
+    }
+}
+void KOKUSEN(){
+    for(auto area: Gojotable){
+        vector<int>postorder = BSTtoPostOrder(area.second);
+        int Y;
     }
 }
 
