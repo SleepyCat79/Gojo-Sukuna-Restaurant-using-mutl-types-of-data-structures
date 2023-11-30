@@ -3,7 +3,7 @@
 
 using namespace std;
 
-const int MAXSIZE=2^10;
+const int MAXSIZE=5;
 //GojoRestaurant
 class GojoBST {
 public:
@@ -39,6 +39,31 @@ void printBST(GojoBST* root) {
         printBST(root->left);
         cout << root->key << endl;
         printBST(root->right);
+    }
+}
+void remove(int area,int Y){
+    GojoBST* root = Gojotable[area];
+    queue<GojoBST*>q;
+    if(root!=nullptr){
+        q.push(root);
+    }
+    while(!q.empty()&&Y>0){
+        GojoBST* tmp = q.front();
+        q.pop();
+        if(tmp->left!=nullptr){
+            q.push(tmp->left);
+        }
+        if(tmp->right!=nullptr){
+            q.push(tmp->right);
+        }
+        delete tmp;
+        Y--;
+    }
+    if(Y>0){
+        Gojotable.erase(area);
+    }
+    else{
+        Gojotable[area] = (q.empty() ? nullptr : q.front());
     }
 }
 //SukunaRestaurant
@@ -194,8 +219,8 @@ int getresult(string caesarname, HuffmanNode* huffmanroot){
 }
 void getinres(int result){
     int id = result%MAXSIZE + 1;
-    cout<<id<<endl;
-    if(result%2==0){
+    cout<<id<<" "<<result<<endl;
+    if(result%2!=0){
         tablegetin(result,id);
     }
     else{
@@ -317,14 +342,19 @@ void KOKUSEN(){
         postorder.insert(postorder.begin(),rootforhvi);
         int fact[postorder.size()];
         int Y=counthoanvi(postorder,fact);
+        remove(area.first,Y);
     }
 }
 //idea:tinh hoan vi cua tat ca leftnode va rightnode + lai =>so hoan vi hop li. Cong thuc rat chuan, so loop trong loop no bi segmant fault, ban tim cach test di.
 
 int main(){
     string s = "aaabbcccDD";
-    LAPSE(s);
-    LAPSE("eeeeFFAFegafokFAf");
-    LIMITLESS(3);
-    LIMITLESS(1);
+    LAPSE ("Johnuigfifbahjasbdfhjbasdhjf");
+    LAPSE ("iuasgfuigweibjaskdfbjksadf");
+    LAPSE ("iuiwehruihqwUIAGSIDiernbsandfb");
+    LAPSE ("uiewhqruihqiuwerhnbdasnbfnmasd");
+    LIMITLESS(2);
+    KOKUSEN();
+    cout<<"Kokusen: "<<endl;
+    LIMITLESS(2);
 }
