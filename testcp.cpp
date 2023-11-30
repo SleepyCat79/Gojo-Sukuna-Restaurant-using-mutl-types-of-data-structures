@@ -208,6 +208,40 @@ void getinres(int result){
         }
     }
 }
+//stuff for Kokusen
+void factorial(int fact[],int n){
+    fact[0]=1;
+    for(int i =1;i<=n;i++){
+        fact[i]=fact[i-1]*i;
+    }
+}
+int nCr(int n,int r){
+    int fact[n+1];
+    factorial(fact,n);
+    return fact[n]/(fact[r]*fact[n-r]);
+}
+int counthoanvi(vector<int>& arr,int fact[]){
+    int n = arr.size();
+    if(n<=2){
+        return 1;
+    }
+    vector<int>left;
+    vector<int>right;
+    int root=arr[0];
+    for(int i =0;i<n;i++){
+        if(arr[i]<root){
+            left.push_back(arr[i]);
+        }
+        else if(arr[i]>root){
+            right.push_back(arr[i]);
+        }
+    }
+    int nleft=left.size();
+    int nright=right.size();
+    int countleft=counthoanvi(left,fact);
+    int countright=counthoanvi(right,fact);
+    return nCr(n-1,nleft)*countleft*countright;
+}
 void simulate(string filename)
 {
 	cout << "Good Luck";
@@ -277,9 +311,15 @@ void LIMITLESS(int NUM){
 void KOKUSEN(){
     for(auto area: Gojotable){
         vector<int>postorder = BSTtoPostOrder(area.second);
-        int Y;
+        int rootforhvi = postorder.back();
+        postorder.pop_back();
+        postorder.push_back(postorder.front());
+        postorder.insert(postorder.begin(),rootforhvi);
+        int fact[postorder.size()];
+        int Y=counthoanvi(postorder,fact);
     }
 }
+//idea:tinh hoan vi cua tat ca leftnode va rightnode + lai =>so hoan vi hop li. Cong thuc rat chuan, so loop trong loop no bi segmant fault, ban tim cach test di.
 
 int main(){
     string s = "aaabbcccDD";
