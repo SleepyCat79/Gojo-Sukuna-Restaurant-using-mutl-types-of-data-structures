@@ -72,29 +72,46 @@ class SKNode{
     int num;
     int key;
     vector<int>customers;
-    SKNode(int key):num(0),key(key){}
+    std::chrono::steady_clock::time_point lastuse;
+    SKNode(int key): num(0), key(key), lastuse(std::chrono::steady_clock::now()) {}
 };
 class minHeap{
     private:
     vector<SKNode*> heap;
-    void heapify(int i){
-        int smallest = i;
-        int left = 2*i+1;
-        int right = 2*i+2;
-        if(left<heap.size() && heap[left]->num<heap[smallest]->num){
-            smallest = left;
+    void reheapUp(int i) {
+        if (i && heap[(i - 1) / 2]->num > heap[i]->num) {
+            swap(heap[i], heap[(i - 1) / 2]);
+            reheapUp((i - 1) / 2);
         }
-        if(right<heap.size() && heap[right]->num<heap[smallest]->num){
-            smallest = right;
+     }
+     void waytopreorder(int i, vector<SKNode*>& result) {
+        if (i >= heap.size()) {
+            return;
         }
-        if(smallest!=i){
-            swap(heap[i],heap[smallest]);
-            heapify(smallest);
-        }
+        result.push_back(heap[i]);
+        waytopreorder(2 * i + 1, result); 
+        waytopreorder(2 * i + 2, result);
+    }
 
+    void reheapDown(int i) {
+        int left = 2 * i + 1;
+        int right = 2 * i + 2;
+        int smallest = i;
+
+        if (left < heap.size() && heap[left]->num < heap[i]->num)
+            smallest = left;
+
+        if (right < heap.size() && (heap[right]->num < heap[smallest]->num || 
+            (heap[right]->num == heap[smallest]->num && heap[right]->customers[0] < heap[smallest]->customers[0])))
+            smallest = right;
+
+        if (smallest != i) {
+            swap(heap[i], heap[smallest]);
+            reheapDown(smallest);
+        }
     }
 public:
-bool nodeExists(int key) {
+    bool nodeExists(int key) {
         for (int i = 0; i < heap.size(); i++) {
             if (heap[i]->key == key) {
                 return true;
@@ -106,22 +123,40 @@ bool nodeExists(int key) {
         SKNode* node = new SKNode(key);
         heap.push_back(node);
         int i = heap.size() - 1;
-        while (i != 0 && heap[(i - 1) / 2]->key > heap[i]->key) {
-            swap(heap[(i - 1) / 2], heap[i]);
-            i = (i - 1) / 2;
-        }
+        reheapUp(i);
     }
     void addCustomer(int key, int customer) {
         for (int i = 0; i < heap.size(); i++) {
             if (heap[i]->key == key) {
                 heap[i]->customers.push_back(customer);
                 heap[i]->num++;
+                heap[i]->lastuse = std::chrono::steady_clock::now();
+                reheapDown(i);
                 break;
             }
         }
     }
+    void removeNode(int key) {
+        int index = -1;
+        for (int i = 0; i < heap.size(); i++) {
+            if (heap[i]->key == key) {
+                index = i;
+                break;
+            }
+        }
+        if (index == -1) return;
+        swap(heap[index], heap[heap.size() - 1]);
+        heap.pop_back();
+        reheapDown(index);
+    }
     vector<SKNode*>& getHeap() {
         return heap;
+    }
+    vector<SKNode*> preorder(){
+        vector<SKNode*> result;
+        waytopreorder(0, result);
+        return result;
+    
     }
 };
 minHeap sukunaheap;
@@ -227,10 +262,14 @@ void getinres(int result){
         if(sukunaheap.nodeExists(id)){
             sukunaheap.addCustomer(id,result);
         }
+        if (sukunaheap.nodeExists(id) && sukunaheap.getHeap()[id]->customers.empty()) {
+            sukunaheap.removeNode(id);
+        }
         else{
             sukunaheap.addNode(id);
             sukunaheap.addCustomer(id,result);
         }
+        
     }
 }
 //stuff for Kokusen
@@ -319,6 +358,10 @@ void LAPSE(string name){
     vector<pair<char,int>>caesar(x.begin(),x.end());
     x.clear();
     sort(caesar.begin(),caesar.end(),sortmap);
+    //print caesar 
+    for(auto pair:caesar){
+        cout<<pair.first<<" "<<pair.second<<endl;
+    }
     HuffmanNode* huffmanroot = buildHuffmanTree(caesar);
     
     int result = getresult(caesarname,huffmanroot);
@@ -345,13 +388,36 @@ void KOKUSEN(){
         remove(area.first,Y);
     }
 }
-//idea:tinh hoan vi cua tat ca leftnode va rightnode + lai =>so hoan vi hop li. Cong thuc rat chuan, so loop trong loop no bi segmant fault, ban tim cach test di.
+void KEITEIKEN(int NUM){
+    SKNode* minarea = *min_element(sukunaheap.getHeap().begin(), sukunaheap.getHeap().end(), 
+        [](const SKNode* a, const SKNode* b) {
+            if(a->num!=b->num){
+                return a->num < b->num;
+            }
+            else{
+                return a->lastuse < b->lastuse;
+            }
+        });
+        while(NUM>0&&!minarea->customers.empty()){
+            cout<<minarea->customers.front()<<"-"<<minarea->key<<endl;
+            minarea->customers.erase(minarea->customers.begin());
+            NUM--;
+        }
+}
+void CLEAVE(int NUM){
+    vector<SKNode*> preorder = sukunaheap.preorder();
+    for(SKNode* area: preorder){
+        int count = min(NUM, area->num);
+            for (int i = 0; i < count; i++) {
+                cout << area->key << "-" << area->customers.back() << endl;
+                area->customers.pop_back();
+                area->num--;
+            }
+    }
+}
 
 int main(){
     string s = "aaabbcccDD";
-    LAPSE ("Johnuigfifbahjasbdfhjbasdhjf");
-    LAPSE ("iuasgfuigweibjaskdfbjksadf");
-    LAPSE ("iuiwehruihqwUIAGSIDiernbsandfb");
     LAPSE ("uiewhqruihqiuwerhnbdasnbfnmasd");
     LIMITLESS(2);
     KOKUSEN();
