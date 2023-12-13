@@ -2,8 +2,7 @@
 #include<bits/stdc++.h>
 
 using namespace std;
-
-const int MAXSIZE=5;
+int MAXSIZE = 0;
 //GojoRestaurant
 class GojoBST {
 public:
@@ -164,37 +163,132 @@ minHeap sukunaheap;
 struct HuffmanNode {
     char data;
     int frequency;
+    int order;
     HuffmanNode* left;
     HuffmanNode* right;
-    HuffmanNode(char d, int freq) : data(d), frequency(freq), left(nullptr), right(nullptr) {}
+    HuffmanNode(char d, int freq, int order) : data(d), frequency(freq), order(order), left(nullptr), right(nullptr) {}
 };
-struct CompareNodes {
-    bool operator()(HuffmanNode* lhs, HuffmanNode* rhs) {
-        return lhs->frequency >= rhs->frequency; 
+HuffmanNode *rotateRight(HuffmanNode* root){
+    HuffmanNode *x = root->left;
+    HuffmanNode *y = x->right;
+    root->left = y;
+    x->right = root;
+    HuffmanNode *tmp = root;
+    tmp->frequency=0;
+    tmp->left?tmp->frequency+=tmp->left->frequency:tmp->frequency+=0;
+    tmp->right?tmp->frequency+=tmp->right->frequency:tmp->frequency+=0;
+    HuffmanNode *tmp2 = x;
+    tmp2->frequency=0;
+    tmp2->left?tmp2->frequency+=tmp2->left->frequency:tmp2->frequency+=0;
+    tmp2->right?tmp2->frequency+=tmp2->right->frequency:tmp2->frequency+=0;
+    return x;
+
+}
+HuffmanNode *rotateLeft(HuffmanNode* root){
+    HuffmanNode *x = root->right;
+    HuffmanNode *y = x->left;
+    root->right = y;
+    x->left = root;
+    HuffmanNode *tmp = root;
+    tmp->frequency=0;
+    tmp->left?tmp->frequency+=tmp->left->frequency:tmp->frequency+=0;
+    tmp->right?tmp->frequency+=tmp->right->frequency:tmp->frequency+=0;
+    HuffmanNode *tmp2 = x;
+    tmp2->frequency=0;
+    tmp2->left?tmp2->frequency+=tmp2->left->frequency:tmp2->frequency+=0;
+    tmp2->right?tmp2->frequency+=tmp2->right->frequency:tmp2->frequency+=0;
+    return x;
+
+}
+int getHeight(HuffmanNode *root){
+    if(!root){
+        return 0;
     }
+    return 1+max(getHeight(root->left),getHeight(root->right));
+}
+HuffmanNode *rotate(HuffmanNode *root)
+{
+	if (!root)
+	{
+		return nullptr;
+	}
+	int balance = getHeight(root->left) - getHeight(root->right);
+	if (balance > 1 && getHeight(root->left->left) - getHeight(root->left->right) >= 0)
+	{
+		return rotateRight(root);
+	}
+	if (balance > 1 && getHeight(root->left->left) < getHeight(root->left->right))
+	{
+		root->left = rotateLeft(root->left);
+		return rotateRight(root);
+	}
+	if (balance < -1 && getHeight(root->right->right) >= getHeight(root->right->left))
+	{
+		return rotateLeft(root);
+	}
+	if (balance < -1 && getHeight(root->right->left) > getHeight(root->right->right))
+	{
+		root->right = rotateRight(root->right);
+		return rotateLeft(root);
+	}
+	return root;
+}
+
+struct CompareNodes
+{
+	bool operator()(const HuffmanNode *lhs, const HuffmanNode *rhs) const
+	{
+		if (lhs->frequency != rhs->frequency)
+		{
+			return lhs->frequency > rhs->frequency;
+		}
+		else if (lhs->data != '\0' && rhs->data != '\0' && lhs->frequency == rhs->frequency)
+		{
+			if (islower(lhs->data) && isupper(rhs->data))
+			{
+				return false;
+			}
+			else if (isupper(lhs->data) && islower(rhs->data))
+			{
+				return true;
+			}
+			else
+			{
+				return lhs->data > rhs->data;
+			}
+		}
+		else
+		{
+			return lhs->order > rhs->order;
+		}
+	}
 };
-HuffmanNode* buildHuffmanTree(vector<pair<char,int>>frequencymap) {
+HuffmanNode* buildHuffmanTree(vector<pair<char,int>>&frequencymap) {
+    int ordercount = 0;
     priority_queue<HuffmanNode*, vector<HuffmanNode*>, CompareNodes> pq;
     for (const auto& pair : frequencymap) {
-        HuffmanNode* node = new HuffmanNode(pair.first, pair.second);
+        HuffmanNode* node = new HuffmanNode(pair.first, pair.second, ordercount);
         pq.push(node);
     }
-
+    ordercount++;
     while (pq.size() > 1) {
         HuffmanNode* leftChild = pq.top();
         pq.pop();
         HuffmanNode* rightChild = pq.top();
         pq.pop();
 
-        HuffmanNode* internalNode = new HuffmanNode('\0', leftChild->frequency + rightChild->frequency);
+        HuffmanNode* internalNode = new HuffmanNode('\0', leftChild->frequency + rightChild->frequency,ordercount);
         internalNode->left = leftChild;
         internalNode->right = rightChild;
-
+        internalNode=rotate(internalNode);
+        internalNode->left=rotate(internalNode->left);
+        internalNode->right=rotate(internalNode->right);
         pq.push(internalNode);
+        ordercount++;
     }
-
     return pq.top();
 }
+HuffmanNode* lastest;
 void encode(HuffmanNode* root, string str,
 			unordered_map<char, string> &huffmanCode){
 	if (root == nullptr)
@@ -254,7 +348,6 @@ int getresult(string caesarname, HuffmanNode* huffmanroot){
 }
 void getinres(int result){
     int id = result%MAXSIZE + 1;
-    cout<<id<<" "<<result<<endl;
     if(result%2!=0){
         tablegetin(result,id);
     }
@@ -308,7 +401,60 @@ int counthoanvi(vector<int>& arr,int fact[]){
 }
 void simulate(string filename)
 {
-	cout << "Good Luck";
+	ifstream ss(filename);
+	string str, maxsize, name, num;
+	while (ss >> str)
+	{
+		if (str == "MAXSIZE")
+		{
+			ss >> maxsize;
+			MAXSIZE = stoi(maxsize);
+			cout << "MAXSIZE: ";
+			cout << MAXSIZE << endl;
+		}
+		else if (str == "LAPSE")
+		{
+			ss >> name;
+			cout << "LAPSE";
+			cout << " ";
+			cout << name << endl;
+			LAPSE(name);
+		}
+		else if (str == "HAND")
+		{
+			cout << "HAND" << endl;
+			HAND();
+		}
+		else if (str == "LIMITLESS")
+		{
+			ss >> num;
+			int n = stoi(num);
+			cout << "LIMITLESS ";
+			cout << n << endl;
+			LIMITLESS(n);
+		}
+		else if (str == "CLEAVE")
+		{
+			ss >> num;
+			int n = stoi(num);
+			cout << "CLEAVE ";
+			cout << n << endl;
+			CLEAVE(n);
+		}
+		else if (str == "KEITEIKEN")
+		{
+			ss >> num;
+			int n = stoi(num);
+			cout << "KEITEIKEN ";
+			cout << n << endl;
+			KEITEIKEN(n);
+		}
+		else if (str == "KOKUSEN")
+		{
+			cout << "KOKUSEN" << endl;
+			KOKUSEN();
+		}
+	}
 	return;
 }
 vector<int> BSTtoPostOrder(GojoBST* root) {
@@ -358,11 +504,8 @@ void LAPSE(string name){
     vector<pair<char,int>>caesar(x.begin(),x.end());
     x.clear();
     sort(caesar.begin(),caesar.end(),sortmap);
-    //print caesar 
-    for(auto pair:caesar){
-        cout<<pair.first<<" "<<pair.second<<endl;
-    }
     HuffmanNode* huffmanroot = buildHuffmanTree(caesar);
+    lastest = huffmanroot;
     
     int result = getresult(caesarname,huffmanroot);
     getinres(result);
@@ -415,12 +558,25 @@ void CLEAVE(int NUM){
             }
     }
 }
+void helperhand(HuffmanNode *latest){
+    if(!latest){
+        return;
+    }
+    helperhand(latest->left);
+    if(latest->data=='\0'){
+        cout<<latest->frequency<<endl;
+    }
+    else{
+        cout<<latest->data<<endl;
+    }
+    helperhand(latest->right);  
+}
+void HAND(){
+    helperhand(lastest);
+}
 
 int main(){
     string s = "aaabbcccDD";
-    LAPSE ("uiewhqruihqiuwerhnbdasnbfnmasd");
-    LIMITLESS(2);
-    KOKUSEN();
-    cout<<"Kokusen: "<<endl;
-    LIMITLESS(2);
+    LAPSE ("bwDMFGZdctZYzChIPdBZyeKgOabnQYxL");
+    HAND();
 }
