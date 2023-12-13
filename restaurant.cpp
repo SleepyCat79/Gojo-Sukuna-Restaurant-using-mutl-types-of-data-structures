@@ -1,4 +1,4 @@
-#include <main.h>
+#include "main.h"
 int MAXSIZE;
 //GojoRestaurant
 class GojoBST {
@@ -80,7 +80,27 @@ class minHeap{
             reheapUp((i - 1) / 2);
         }
      }
-     void waytopreorder(int i, vector<SKNode*>& result) {
+
+    void reheapDown(int i)
+{
+	int largest = i;
+	int left = 2 * i + 1;
+	int right = 2 * i + 2;
+	if (left < heap.size() && heap[left]->num < heap[largest]->num)
+	{
+		largest = left;
+	}
+	if (right < heap.size() && heap[right]->num < heap[largest]->num)
+	{
+		largest = right;
+	}
+	if (largest != i)
+	{
+		swap(heap[i], heap[largest]);
+		reheapDown(largest);
+	}
+}
+    void waytopreorder(int i, vector<SKNode*>& result) {
         if (i >= heap.size()) {
             return;
         }
@@ -88,32 +108,25 @@ class minHeap{
         waytopreorder(2 * i + 1, result); 
         waytopreorder(2 * i + 2, result);
     }
-
-    void reheapDown(int i) {
-        int left = 2 * i + 1;
-        int right = 2 * i + 2;
-        int smallest = i;
-
-        if (left < heap.size() && heap[left]->num < heap[i]->num)
-            smallest = left;
-
-        if (right < heap.size() && (heap[right]->num < heap[smallest]->num || 
-            (heap[right]->num == heap[smallest]->num && heap[right]->customers[0] < heap[smallest]->customers[0])))
-            smallest = right;
-
-        if (smallest != i) {
-            swap(heap[i], heap[smallest]);
-            reheapDown(smallest);
-        }
-    }
+    
 public:
+int getSize(){
+    return heap.size();
+}
     bool nodeExists(int key) {
-        for (int i = 0; i < heap.size(); i++) {
+        int heapsize = heap.size();
+        for (int i = 0; i < heapsize; i++) {
             if (heap[i]->key == key) {
                 return true;
             }
         }
         return false;
+    }
+    bool isEmpty() const {
+        return heap.empty();
+    }
+    SKNode* operator[](int index) {
+        return heap[index];
     }
     void addNode(int key) {
         SKNode* node = new SKNode(key);
@@ -122,7 +135,8 @@ public:
         reheapUp(i);
     }
     void addCustomer(int key, int customer) {
-        for (int i = 0; i < heap.size(); i++) {
+        int heapsize=heap.size();
+        for (int i = 0; i < heapsize; i++) {
             if (heap[i]->key == key) {
                 heap[i]->customers.push_back(customer);
                 heap[i]->num++;
@@ -131,28 +145,33 @@ public:
                 break;
             }
         }
+        for(int i =0;i<heapsize;i++){
+            cout<<heap[i]->key<<" ";
+        }
+        cout<<endl;
     }
     void removeNode(int key) {
         int index = -1;
-        for (int i = 0; i < heap.size(); i++) {
+        int heapsize=heap.size();
+        for (int i = 0; i < heapsize; i++) {
             if (heap[i]->key == key) {
                 index = i;
                 break;
             }
         }
         if (index == -1) return;
-        swap(heap[index], heap[heap.size() - 1]);
+        swap(heap[index], heap[heapsize - 1]);
         heap.pop_back();
         reheapDown(index);
-    }
-    vector<SKNode*>& getHeap() {
-        return heap;
     }
     vector<SKNode*> preorder(){
         vector<SKNode*> result;
         waytopreorder(0, result);
         return result;
     
+    }
+    vector<SKNode*>& getHeap() {
+        return heap;
     }
 };
 minHeap sukunaheap;
@@ -170,14 +189,6 @@ HuffmanNode *rotateRight(HuffmanNode* root){
     HuffmanNode *y = x->right;
     root->left = y;
     x->right = root;
-    HuffmanNode *tmp = root;
-    tmp->frequency=0;
-    tmp->left?tmp->frequency+=tmp->left->frequency:tmp->frequency+=0;
-    tmp->right?tmp->frequency+=tmp->right->frequency:tmp->frequency+=0;
-    HuffmanNode *tmp2 = x;
-    tmp2->frequency=0;
-    tmp2->left?tmp2->frequency+=tmp2->left->frequency:tmp2->frequency+=0;
-    tmp2->right?tmp2->frequency+=tmp2->right->frequency:tmp2->frequency+=0;
     return x;
 
 }
@@ -186,14 +197,6 @@ HuffmanNode *rotateLeft(HuffmanNode* root){
     HuffmanNode *y = x->left;
     root->right = y;
     x->left = root;
-    HuffmanNode *tmp = root;
-    tmp->frequency=0;
-    tmp->left?tmp->frequency+=tmp->left->frequency:tmp->frequency+=0;
-    tmp->right?tmp->frequency+=tmp->right->frequency:tmp->frequency+=0;
-    HuffmanNode *tmp2 = x;
-    tmp2->frequency=0;
-    tmp2->left?tmp2->frequency+=tmp2->left->frequency:tmp2->frequency+=0;
-    tmp2->right?tmp2->frequency+=tmp2->right->frequency:tmp2->frequency+=0;
     return x;
 
 }
@@ -203,27 +206,33 @@ int getHeight(HuffmanNode *root){
     }
     return 1+max(getHeight(root->left),getHeight(root->right));
 }
+int getBalance(HuffmanNode *N)  
+{  
+    if (N == NULL)  
+        return 0;  
+    return getHeight(N->left) - getHeight(N->right);  
+}
 HuffmanNode *rotate(HuffmanNode *root)
 {
 	if (!root)
 	{
 		return nullptr;
 	}
-	int balance = getHeight(root->left) - getHeight(root->right);
-	if (balance > 1 && getHeight(root->left->left) - getHeight(root->left->right) >= 0)
+	int balance = getBalance(root);
+	if (balance > 1 && getBalance(root->left) >= 0)
 	{
 		return rotateRight(root);
 	}
-	if (balance > 1 && getHeight(root->left->left) < getHeight(root->left->right))
+	if (balance > 1 && getBalance(root->left))
 	{
 		root->left = rotateLeft(root->left);
 		return rotateRight(root);
 	}
-	if (balance < -1 && getHeight(root->right->right) >= getHeight(root->right->left))
+	if (balance < -1 && getBalance(root->right)<=0)
 	{
 		return rotateLeft(root);
 	}
-	if (balance < -1 && getHeight(root->right->left) > getHeight(root->right->right))
+	if (balance < -1 && getBalance(root->right)>0)
 	{
 		root->right = rotateRight(root->right);
 		return rotateLeft(root);
@@ -260,6 +269,31 @@ struct CompareNodes
 		}
 	}
 };
+HuffmanNode *reBalance(HuffmanNode *root, int &count)
+{
+	if (root == nullptr)
+	{
+		return root;
+	}
+	if (count == 0)
+	{
+		return root;
+	}
+	while (count > 0)
+	{
+		int balance = getBalance(root);
+		if (abs(balance) > 1)
+		{
+			root = rotate(root);
+			count--;
+		}
+		else
+			break;
+	}
+	root->left = reBalance(root->left, count);
+	root->right = reBalance(root->right, count);
+	return root;
+}
 HuffmanNode* buildHuffmanTree(vector<pair<char,int>>&frequencymap) {
     int ordercount = 0;
     priority_queue<HuffmanNode*, vector<HuffmanNode*>, CompareNodes> pq;
@@ -273,13 +307,15 @@ HuffmanNode* buildHuffmanTree(vector<pair<char,int>>&frequencymap) {
         pq.pop();
         HuffmanNode* rightChild = pq.top();
         pq.pop();
-
         HuffmanNode* internalNode = new HuffmanNode('\0', leftChild->frequency + rightChild->frequency,ordercount);
         internalNode->left = leftChild;
         internalNode->right = rightChild;
         internalNode=rotate(internalNode);
         internalNode->left=rotate(internalNode->left);
         internalNode->right=rotate(internalNode->right);
+        int rotatetime = 3;
+        internalNode= reBalance(internalNode,rotatetime);
+        internalNode->order=ordercount;
         pq.push(internalNode);
         ordercount++;
     }
@@ -329,15 +365,15 @@ int getresult(string caesarname, HuffmanNode* huffmanroot){
 	for (char ch: caesarname) {
 		str += huffmanCode[ch];
 	}
-    int result;
     string tmp="";
-    if(str.size()<=10){
-        for(int i = str.size();i>0;i--){
+    int strsize=str.size();
+    if(strsize<=10){
+        for(int i = strsize;i>0;i--){
             tmp+=str[i];
         }
     }
     else{
-        for(int i =str.size()-1;i>str.size()-11;i--){
+        for(int i =str.size()-1;i>strsize-11;i--){
             tmp+=str[i];
         }
     }
@@ -345,15 +381,14 @@ int getresult(string caesarname, HuffmanNode* huffmanroot){
 }
 void getinres(int result){
     int id = result%MAXSIZE + 1;
+    cout<<result<<" "<<id<<endl;
     if(result%2!=0){
         tablegetin(result,id);
     }
     else{
+
         if(sukunaheap.nodeExists(id)){
             sukunaheap.addCustomer(id,result);
-        }
-        if (sukunaheap.nodeExists(id) && sukunaheap.getHeap()[id]->customers.empty()) {
-            sukunaheap.removeNode(id);
         }
         else{
             sukunaheap.addNode(id);
@@ -391,11 +426,147 @@ int counthoanvi(vector<int>& arr,int fact[]){
         }
     }
     int nleft=left.size();
-    int nright=right.size();
     int countleft=counthoanvi(left,fact);
     int countright=counthoanvi(right,fact);
     return nCr(n-1,nleft)*countleft*countright;
 }
+vector<int> BSTtoPostOrder(GojoBST* root) {
+    vector<int> arr;
+    if (root) {
+        vector<int> left = BSTtoPostOrder(root->left);
+        vector<int> right = BSTtoPostOrder(root->right);
+        arr.insert(arr.end(), left.begin(), left.end());
+        arr.insert(arr.end(), right.begin(), right.end());
+        arr.push_back(root->key);
+    }
+    return arr;
+}
+void LAPSE(string name){
+	int size = name.length();
+	unordered_map<char,int>freq;
+	for(int i =0;i<size;i++){
+		if(name[i]==' ') continue;
+		freq[name[i]]++;
+	}
+    if(freq.size()<3){
+        return;
+    }
+	unordered_map<char,int>x;
+    string caesarname = "";
+    for(int i =0;i<size;i++){
+        char tmpc = name[i];
+        if (islower(tmpc)) {
+            caesarname += (tmpc - 'a' + freq[tmpc]) % 26 + 'a';
+        } 
+        else if (isupper(tmpc)) {
+            caesarname += (tmpc - 'A' + freq[tmpc]) % 26 + 'A';
+        }
+    }
+	for(auto pair:freq){
+		char orgi = pair.first;
+		int frequency=pair.second;
+		char caesar;
+        if (islower(orgi)) {
+            caesar = (orgi - 'a' + frequency) % 26 + 'a';
+        } 
+        else if (isupper(orgi)) {
+            caesar = (orgi - 'A' + frequency) % 26 + 'A';
+        }
+		x[caesar]+=frequency;
+	}
+    vector<pair<char,int>>caesar(x.begin(),x.end());
+    x.clear();
+    sort(caesar.begin(),caesar.end(),sortmap);
+    HuffmanNode* huffmanroot = buildHuffmanTree(caesar);
+    lastest = huffmanroot;
+    int result = getresult(caesarname,huffmanroot);
+    getinres(result);
+}
+
+void LIMITLESS(int NUM){
+    if (Gojotable.find(NUM) != Gojotable.end()) {
+        printBST(Gojotable[NUM]);
+    } 
+    else {
+        return;
+    }
+}
+void KOKUSEN(){
+    if(Gojotable.empty()){
+        return;
+    }
+    for(auto area: Gojotable){
+        if(area.second ==nullptr){
+            continue;
+        }
+        vector<int>postorder = BSTtoPostOrder(area.second);
+        int rootforhvi = postorder.back();
+        postorder.pop_back();
+        postorder.push_back(postorder.front());
+        postorder.insert(postorder.begin(),rootforhvi);
+        int fact[postorder.size()];
+        int Y=counthoanvi(postorder,fact);
+        remove(area.first,Y);
+    }
+}
+void KEITEIKEN(int NUM){
+    if(sukunaheap.isEmpty()){
+        return;
+    }
+    SKNode* minarea = *min_element(sukunaheap.getHeap().begin(), sukunaheap.getHeap().end(), 
+        [](const SKNode* a, const SKNode* b) {
+            if(a->num!=b->num){
+                return a->num < b->num;
+            }
+            else{
+                return a->lastuse < b->lastuse;
+            }
+        });
+        while(NUM>0){
+            cout<<minarea->customers.front()<<"-"<<minarea->key<<endl;
+            minarea->customers.erase(minarea->customers.begin());
+            NUM--;
+        }
+        if(minarea->num==0){
+            delete minarea;
+            minarea=nullptr;
+        }
+}
+void printEachAreaOfSukuna(SKNode* area, int num) {
+    int count = min(num, area->num);
+    for (int i = 0; i < count; i++) {
+        cout << area->key << "-" << area->customers[i] << endl;
+    }
+}
+
+
+void CLEAVE(int NUM){
+    vector<SKNode*> preorder = sukunaheap.preorder();
+    for(SKNode* area: preorder){
+        int count = min(NUM, area->num);
+        for (int i = 0; i < count; i++) {
+            cout << area->key << "-" << area->customers[i] << endl;
+        }
+    }
+}
+
+void helperhand(HuffmanNode *latest){
+    if(!latest){
+        return;
+    }
+    helperhand(latest->left);
+    if(latest->data=='\0'){
+        cout<<latest->frequency<<endl;
+    }
+    else{
+        cout<<latest->data<<endl;
+    }
+    helperhand(latest->right);  
+}
+void HAND(){
+    helperhand(lastest);
+}
+
 void simulate(string filename)
 {
 	ifstream ss(filename);
@@ -453,127 +624,4 @@ void simulate(string filename)
 		}
 	}
 	return;
-}
-vector<int> BSTtoPostOrder(GojoBST* root) {
-    vector<int> arr;
-    if (root) {
-        vector<int> left = BSTtoPostOrder(root->left);
-        vector<int> right = BSTtoPostOrder(root->right);
-        arr.insert(arr.end(), left.begin(), left.end());
-        arr.insert(arr.end(), right.begin(), right.end());
-        arr.push_back(root->key);
-    }
-    return arr;
-}
-void LAPSE(string name){
-	int size = name.length();
-	unordered_map<char,int>freq;
-	for(int i =0;i<size;i++){
-		if(name[i]==' ') continue;
-		freq[name[i]]++;
-	}
-    if(freq.size()<3){
-        return;
-    }
-	unordered_map<char,int>x;
-    string caesarname = "";
-    for(int i =0;i<size;i++){
-        char tmpc = name[i];
-        if (islower(tmpc)) {
-            caesarname += (tmpc - 'a' + freq[tmpc]) % 26 + 'a';
-        } 
-        else if (isupper(tmpc)) {
-            caesarname += (tmpc - 'A' + freq[tmpc]) % 26 + 'A';
-        }
-    }
-	for(auto pair:freq){
-		char orgi = pair.first;
-		int frequency=pair.second;
-		char caesar;
-        if (islower(orgi)) {
-            caesar = (orgi - 'a' + frequency) % 26 + 'a';
-        } 
-        else if (isupper(orgi)) {
-            caesar = (orgi - 'A' + frequency) % 26 + 'A';
-        }
-		x[caesar]+=frequency;
-	}
-    vector<pair<char,int>>caesar(x.begin(),x.end());
-    x.clear();
-    sort(caesar.begin(),caesar.end(),sortmap);
-    HuffmanNode* huffmanroot = buildHuffmanTree(caesar);
-    lastest = huffmanroot;
-    
-    int result = getresult(caesarname,huffmanroot);
-    getinres(result);
-}
-
-void LIMITLESS(int NUM){
-    if (Gojotable.find(NUM) != Gojotable.end()) {
-        printBST(Gojotable[NUM]);
-    } 
-    else {
-        return;
-    }
-}
-void KOKUSEN(){
-    for(auto area: Gojotable){
-        vector<int>postorder = BSTtoPostOrder(area.second);
-        int rootforhvi = postorder.back();
-        postorder.pop_back();
-        postorder.push_back(postorder.front());
-        postorder.insert(postorder.begin(),rootforhvi);
-        int fact[postorder.size()];
-        int Y=counthoanvi(postorder,fact);
-        remove(area.first,Y);
-    }
-}
-void KEITEIKEN(int NUM){
-    SKNode* minarea = *min_element(sukunaheap.getHeap().begin(), sukunaheap.getHeap().end(), 
-        [](const SKNode* a, const SKNode* b) {
-            if(a->num!=b->num){
-                return a->num < b->num;
-            }
-            else{
-                return a->lastuse < b->lastuse;
-            }
-        });
-        while(NUM>0&&!minarea->customers.empty()){
-            cout<<minarea->customers.front()<<"-"<<minarea->key<<endl;
-            minarea->customers.erase(minarea->customers.begin());
-            NUM--;
-        }
-}
-void CLEAVE(int NUM){
-    vector<SKNode*> preorder = sukunaheap.preorder();
-    for(SKNode* area: preorder){
-        int count = min(NUM, area->num);
-            for (int i = 0; i < count; i++) {
-                cout << area->key << "-" << area->customers.back() << endl;
-                area->customers.pop_back();
-                area->num--;
-            }
-    }
-}
-void helperhand(HuffmanNode *latest){
-    if(!latest){
-        return;
-    }
-    helperhand(latest->left);
-    if(latest->data=='\0'){
-        cout<<latest->frequency<<endl;
-    }
-    else{
-        cout<<latest->data<<endl;
-    }
-    helperhand(latest->right);  
-}
-void HAND(){
-    helperhand(lastest);
-}
-
-int main(){
-    string s = "aaabbcccDD";
-    LAPSE ("bwDMFGZdctZYzChIPdBZyeKgOabnQYxL");
-    HAND();
 }
