@@ -74,6 +74,7 @@ class SKNode{
     public:
     int num;
     int key;
+    bool firsttime = true;
     vector<int>customers;
     std::chrono::steady_clock::time_point lastuse;
     SKNode(int key): num(0), key(key), lastuse(std::chrono::steady_clock::now()) {}
@@ -86,10 +87,15 @@ class minHeap{
             swap(heap[i], heap[(i - 1) / 2]);
             reheapUp((i - 1) / 2);
         }
+        else if(i && heap[(i - 1) / 2]->num == heap[i]->num){
+            if(heap[(i - 1) / 2]->lastuse > heap[i]->lastuse){
+                swap(heap[i], heap[(i - 1) / 2]);
+                reheapUp((i - 1) / 2);
+            }
+        }
      }
 
-    void reheapDown(int i)
-{
+    void reheapDown(int i){
 	int largest = i;
 	int left = 2 * i + 1;
 	int right = 2 * i + 2;
@@ -97,10 +103,20 @@ class minHeap{
 	{
 		largest = left;
 	}
+    else if(left < heap.size() && heap[left]->num == heap[largest]->num){
+        if(heap[left]->lastuse < heap[largest]->lastuse){
+            largest = left;
+        }
+    }
 	if (right < heap.size() && heap[right]->num < heap[largest]->num)
 	{
 		largest = right;
 	}
+    else if(right < heap.size() && heap[right]->num == heap[largest]->num){
+        if(heap[right]->lastuse < heap[largest]->lastuse){
+            largest = right;
+        }
+    }
 	if (largest != i)
 	{
 		swap(heap[i], heap[largest]);
@@ -137,6 +153,7 @@ int getSize(){
     }
     void addNode(int key) {
         SKNode* node = new SKNode(key);
+        node->num=1;
         heap.push_back(node);
         int i = heap.size() - 1;
         reheapUp(i);
@@ -146,7 +163,13 @@ int getSize(){
         for (int i = 0; i < heapsize; i++) {
             if (heap[i]->key == key) {
                 heap[i]->customers.push_back(customer);
-                heap[i]->num++;
+                if(heap[i]->firsttime){
+                    heap[i]->firsttime=false;
+                    heap[i]->num=heap[i]->customers.size();
+                }
+                else{
+                    heap[i]->num++;
+                }
                 heap[i]->lastuse = std::chrono::steady_clock::now();
                 reheapDown(i);
                 break;
@@ -158,17 +181,19 @@ int getSize(){
         auto it = std::find(node->customers.begin(), node->customers.end(), customerID);
         if (it != node->customers.end()) {
             node->customers.erase(it);
+            node->num--;
+            node->lastuse = std::chrono::steady_clock::now();
+            reheapUp(0);
             break; 
+        }
+        if(node->num==0){
+            swap(node, heap.back());
+            heap.pop_back();
+            reheapDown(it - node->customers.begin());
         }
     }
 }
-    void remove(SKNode* node) {
-        auto it = std::find(heap.begin(), heap.end(), node);
-        if (it != heap.end()) {
-            heap.erase(it);
-            reheapDown(0);
-        }
-    }
+ 
     vector<SKNode*> preorder(){
         vector<SKNode*> result;
         waytopreorder(0, result);
@@ -521,8 +546,9 @@ void KOKUSEN(){
 }
 void KEITEIKEN(int NUM){
     SKNode* lastProcessedArea = nullptr;
+    int tmpnum1=NUM;
     while(NUM > 0 && !sukunaheap.isEmpty()){
-        int tmpnum=NUM;
+        int tmpnum=tmpnum1;
         SKNode* minarea = *min_element(sukunaheap.getHeap().begin(), sukunaheap.getHeap().end(), 
             [lastProcessedArea](const SKNode* a, const SKNode* b) {
                 if(a == lastProcessedArea) return false;
@@ -537,19 +563,10 @@ void KEITEIKEN(int NUM){
         if(minarea == lastProcessedArea) break;
         while(tmpnum > 0 && minarea->num > 0){
             cout << minarea->customers.front() << "-" << minarea->key << endl;
-            minarea->customers.erase(minarea->customers.begin());
-            minarea->num--; 
+            sukunaheap.deleteCustomer(minarea->customers.front());
             tmpnum--;
         }
         lastProcessedArea = minarea;
-        if(minarea->num == 0){
-            sukunaheap.remove(minarea);
-            delete minarea;
-            minarea = nullptr;
-        }
-        else{
-            minarea->lastuse = std::chrono::steady_clock::now();
-        }
         NUM--;
     }
 }
