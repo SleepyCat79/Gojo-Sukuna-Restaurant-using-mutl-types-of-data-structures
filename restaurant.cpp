@@ -52,6 +52,7 @@ void remove(int area,int Y){
         if(tmp->right!=nullptr){
             q.push(tmp->right);
         }
+        cout << "Area: " << area << ", Customer: " << tmp->key << endl;
         delete tmp;
         Y--;
     }
@@ -60,6 +61,12 @@ void remove(int area,int Y){
     }
     else{
         Gojotable[area] = (q.empty() ? nullptr : q.front());
+    }
+}
+void printAllCustomers() {
+    for (auto& area : Gojotable) {
+        cout << "Area " << area.first << ":\n";
+        printBST(area.second);
     }
 }
 //SukunaRestaurant
@@ -145,24 +152,22 @@ int getSize(){
                 break;
             }
         }
-        for(int i =0;i<heapsize;i++){
-            cout<<heap[i]->key<<" ";
-        }
-        cout<<endl;
     }
-    void removeNode(int key) {
-        int index = -1;
-        int heapsize=heap.size();
-        for (int i = 0; i < heapsize; i++) {
-            if (heap[i]->key == key) {
-                index = i;
-                break;
-            }
+    void deleteCustomer(int customerID) {
+    for (SKNode* node : heap) {
+        auto it = std::find(node->customers.begin(), node->customers.end(), customerID);
+        if (it != node->customers.end()) {
+            node->customers.erase(it);
+            break; 
         }
-        if (index == -1) return;
-        swap(heap[index], heap[heapsize - 1]);
-        heap.pop_back();
-        reheapDown(index);
+    }
+}
+    void remove(SKNode* node) {
+        auto it = std::find(heap.begin(), heap.end(), node);
+        if (it != heap.end()) {
+            heap.erase(it);
+            reheapDown(0);
+        }
     }
     vector<SKNode*> preorder(){
         vector<SKNode*> result;
@@ -474,6 +479,7 @@ void LAPSE(string name){
         }
 		x[caesar]+=frequency;
 	}
+    cout<<caesarname<<endl;
     vector<pair<char,int>>caesar(x.begin(),x.end());
     x.clear();
     sort(caesar.begin(),caesar.end(),sortmap);
@@ -495,6 +501,8 @@ void KOKUSEN(){
     if(Gojotable.empty()){
         return;
     }
+    printAllCustomers();
+    cout<<"BEFORE KOKUSEN"<<endl;
     for(auto area: Gojotable){
         if(area.second ==nullptr){
             continue;
@@ -508,29 +516,42 @@ void KOKUSEN(){
         int Y=counthoanvi(postorder,fact);
         remove(area.first,Y);
     }
+    cout<<"AFTER KOKUSEN"<<endl;
+    printAllCustomers();
 }
 void KEITEIKEN(int NUM){
-    if(sukunaheap.isEmpty()){
-        return;
-    }
-    SKNode* minarea = *min_element(sukunaheap.getHeap().begin(), sukunaheap.getHeap().end(), 
-        [](const SKNode* a, const SKNode* b) {
-            if(a->num!=b->num){
-                return a->num < b->num;
-            }
-            else{
-                return a->lastuse < b->lastuse;
-            }
-        });
-        while(NUM>0){
-            cout<<minarea->customers.front()<<"-"<<minarea->key<<endl;
+    SKNode* lastProcessedArea = nullptr;
+    while(NUM > 0 && !sukunaheap.isEmpty()){
+        int tmpnum=NUM;
+        SKNode* minarea = *min_element(sukunaheap.getHeap().begin(), sukunaheap.getHeap().end(), 
+            [lastProcessedArea](const SKNode* a, const SKNode* b) {
+                if(a == lastProcessedArea) return false;
+                if(b == lastProcessedArea) return true;
+                if(a->num!=b->num){
+                    return a->num < b->num;
+                }
+                else{
+                    return a->lastuse < b->lastuse;
+                }
+            });
+        if(minarea == lastProcessedArea) break;
+        while(tmpnum > 0 && minarea->num > 0){
+            cout << minarea->customers.front() << "-" << minarea->key << endl;
             minarea->customers.erase(minarea->customers.begin());
-            NUM--;
+            minarea->num--; 
+            tmpnum--;
         }
-        if(minarea->num==0){
+        lastProcessedArea = minarea;
+        if(minarea->num == 0){
+            sukunaheap.remove(minarea);
             delete minarea;
-            minarea=nullptr;
+            minarea = nullptr;
         }
+        else{
+            minarea->lastuse = std::chrono::steady_clock::now();
+        }
+        NUM--;
+    }
 }
 void printEachAreaOfSukuna(SKNode* area, int num) {
     int count = min(num, area->num);
@@ -544,7 +565,7 @@ void CLEAVE(int NUM){
     vector<SKNode*> preorder = sukunaheap.preorder();
     for(SKNode* area: preorder){
         int count = min(NUM, area->num);
-        for (int i = 0; i < count; i++) {
+        for (int i = count - 1; i >= 0; i--) {
             cout << area->key << "-" << area->customers[i] << endl;
         }
     }
