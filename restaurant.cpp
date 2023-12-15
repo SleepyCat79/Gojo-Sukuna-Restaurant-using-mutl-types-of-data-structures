@@ -4,10 +4,11 @@ int MAXSIZE;
 class GojoBST {
 public:
     int key;
+    int num;
     GojoBST* left;
     GojoBST* right;
-
-    GojoBST(int key) : key(key), left(nullptr), right(nullptr) {}
+    std::chrono::steady_clock::time_point order;
+    GojoBST(int key) : key(key), left(nullptr), right(nullptr),order(std::chrono::steady_clock::now()){}
 };
 unordered_map<int, GojoBST*> Gojotable;
 GojoBST* insert(GojoBST* root,int key){
@@ -25,9 +26,11 @@ GojoBST* insert(GojoBST* root,int key){
 void tablegetin(int result,int id){
     if(Gojotable.find(id)==Gojotable.end()){
         Gojotable[id]=new GojoBST(result);
+        Gojotable[id]->num=1;
     }
     else{
         Gojotable[id]=insert(Gojotable[id], result);
+        Gojotable[id]->num++;
     }
 }
 void printBST(GojoBST* root) {
@@ -37,31 +40,93 @@ void printBST(GojoBST* root) {
         printBST(root->right);
     }
 }
-void remove(int area,int Y){
-    GojoBST* root = Gojotable[area];
-    queue<GojoBST*>q;
-    if(root!=nullptr){
-        q.push(root);
+void getNodesInOrder(GojoBST* root, vector<pair<int, std::chrono::steady_clock::time_point>>& nodes) {
+    if (root != nullptr) {
+        getNodesInOrder(root->left, nodes);
+        nodes.push_back({root->key, root->order});
+        getNodesInOrder(root->right, nodes);
     }
-    while(!q.empty()&&Y>0){
-        GojoBST* tmp = q.front();
-        q.pop();
-        if(tmp->left!=nullptr){
-            q.push(tmp->left);
-        }
-        if(tmp->right!=nullptr){
-            q.push(tmp->right);
-        }
-        cout << "Area: " << area << ", Customer: " << tmp->key << endl;
-        delete tmp;
-        Y--;
+}
+GojoBST *delNode(GojoBST *root, int tmp)
+{
+	if (!root)
+	{
+		return root;
+	}
+	if (root->key > tmp)
+	{
+		root->left = delNode(root->left, tmp);
+		return root;
+	}
+	else if (root->key < tmp)
+	{
+		root->right = delNode(root->right, tmp);
+		return root;
+	}
+	if (root->left == NULL)
+	{
+		GojoBST *temp = root->right;
+		delete root;
+		return temp;
+	}
+	else if (root->right == NULL)
+	{
+		GojoBST *temp = root->left;
+		delete root;
+		return temp;
+	}
+	else
+	{
+
+		GojoBST *succParent = root;
+		// Find successor
+		GojoBST *succ = root->right;
+		while (succ->left != NULL)
+		{
+			succParent = succ;
+			succ = succ->left;
+		}
+
+		if (succParent != root)
+			succParent->left = succ->right;
+		else
+			succParent->right = succ->right;
+
+		// Copy Successor Data to root
+		root->key = succ->key;
+
+		// Delete Successor and return root
+		delete succ;
+		return root;
+	}
+}
+void remove(int ID,int Y){
+    int n = Gojotable[ID]->num;
+	if (n <= Y)
+	{
+        cout<<"A"<<endl;
+		GojoBST *tmp = Gojotable[ID];
+        Gojotable[ID]->num=0;
+		Gojotable[ID] = nullptr;
+		delete tmp;
+	}
+	else
+	{
+        cout<<"B"<<endl;
+        vector<pair<int, std::chrono::steady_clock::time_point>> nodes;
+        if (Gojotable.find(ID) != Gojotable.end()) {
+        getNodesInOrder(Gojotable[ID], nodes);
+        sort(nodes.begin(), nodes.end(), [](const pair<int, std::chrono::steady_clock::time_point>& a, const pair<int, std::chrono::steady_clock::time_point>& b) {
+        return a.second < b.second;
+    });
     }
-    if(Y>0){
-        Gojotable.erase(area);
-    }
-    else{
-        Gojotable[area] = (q.empty() ? nullptr : q.front());
-    }
+		for (int i = 0; i < Y; i++)
+		{
+			Gojotable[ID] = delNode(Gojotable[ID], nodes[0].first);
+			Gojotable[ID]->num--;
+			nodes.erase(nodes.begin() + 0);
+		}
+	}
 }
 void printAllCustomers() {
     for (auto& area : Gojotable) {
@@ -537,10 +602,8 @@ void KOKUSEN(){
         return;
     }
     cout<<"BEFORE KOKUSEN"<<endl;
+    printAllCustomers();
     for(auto area: Gojotable){
-        if(area.second ==nullptr){
-            continue;
-        }
         vector<int>postorder = BSTtoPostOrder(area.second);
         reverse(postorder.begin(), postorder.end());
         int fact[postorder.size()];
@@ -548,6 +611,7 @@ void KOKUSEN(){
         remove(area.first,Y);
     }
     cout<<"AFTER KOKUSEN"<<endl;
+    printAllCustomers();
 }
 void KEITEIKEN(int NUM){
     vector<SKNode> keiteiken;
@@ -576,10 +640,17 @@ void printEachAreaOfSukuna(SKNode* area, int num) {
 void CLEAVE(int NUM){
     vector<SKNode*> preorder = sukunaheap.preorder();
     for(SKNode* area: preorder){
-        int count = min(NUM, area->num);
-        for (int i = count - 1; i >= 0; i--) {
-            cout << area->key << "-" << area->customers[i] << endl;
+        if(NUM>area->num){
+            for (int i = area->num-1; i >= 0; i--) {
+                cout << area->key << "-" << area->customers[i] << endl;
+            }
         }
+        else{
+            for(int i =area->num-1;i>=area->num-NUM;i--){
+                cout<<area->key<<"-"<<area->customers[i]<<endl;
+            }
+        }
+        
     }
 }
 
