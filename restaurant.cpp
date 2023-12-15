@@ -267,7 +267,7 @@ int getSize(){
                 }
                 else{
                     for(int j=0;j<numdelete;j++){
-                        cout<<tmp->customers[j]<<"-"<<tmp->key<<endl;
+                        cout<<tmp->customers[0]<<"-"<<tmp->key<<endl;
                         tmp->num--;
                         tmp->lastuse = std::chrono::steady_clock::now();
                         tmp->customers.erase(tmp->customers.begin());
