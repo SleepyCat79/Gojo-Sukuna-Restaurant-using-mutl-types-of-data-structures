@@ -457,11 +457,11 @@ int counthoanvi(vector<int>& arr,int fact[]){
     vector<int>left;
     vector<int>right;
     int root=arr[0];
-    for(int i =0;i<n;i++){
+    for(int i =1;i<n;i++){
         if(arr[i]<root){
             left.push_back(arr[i]);
         }
-        else if(arr[i]>root){
+        else{
             right.push_back(arr[i]);
         }
     }
@@ -536,23 +536,18 @@ void KOKUSEN(){
     if(Gojotable.empty()){
         return;
     }
-    printAllCustomers();
     cout<<"BEFORE KOKUSEN"<<endl;
     for(auto area: Gojotable){
         if(area.second ==nullptr){
             continue;
         }
         vector<int>postorder = BSTtoPostOrder(area.second);
-        int rootforhvi = postorder.back();
-        postorder.pop_back();
-        postorder.push_back(postorder.front());
-        postorder.insert(postorder.begin(),rootforhvi);
+        swap(postorder[0],postorder[postorder.size()-1]);
         int fact[postorder.size()];
         int Y=counthoanvi(postorder,fact);
         remove(area.first,Y);
     }
     cout<<"AFTER KOKUSEN"<<endl;
-    printAllCustomers();
 }
 void KEITEIKEN(int NUM){
     vector<SKNode> keiteiken;
