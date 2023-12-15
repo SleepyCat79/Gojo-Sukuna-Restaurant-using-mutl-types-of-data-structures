@@ -430,6 +430,10 @@ HuffmanNode* buildHuffmanTree(vector<pair<char,int>>&frequencymap) {
         int rotatetime = 3;
         internalNode= reBalance(internalNode,rotatetime);
         internalNode->order=ordercount;
+        if (internalNode->data != '\0')
+		{
+			return nullptr;
+		}
         pq.push(internalNode);
         ordercount++;
     }
@@ -473,6 +477,9 @@ bool sortmap(pair<char,int>a,pair<char,int>b){
     return a.second==b.second? a.first<b.first:a.second<b.second;
 }
 int getresult(string caesarname, HuffmanNode* huffmanroot){
+    if(huffmanroot==nullptr){
+        return -1;
+    }
     unordered_map<char, string> huffmanCode;
     encode(huffmanroot,"",huffmanCode);
     string str = "";
@@ -494,8 +501,10 @@ int getresult(string caesarname, HuffmanNode* huffmanroot){
     return binaryToDecimal(std::stoi( tmp ));
 }
 void getinres(int result){
+    if(result==-1){
+        return;
+    }
     int id = result%MAXSIZE + 1;
-    cout<<result<<" "<<id<<endl;
     if(result%2!=0){
         tablegetin(result,id);
     }
@@ -588,7 +597,6 @@ void LAPSE(string name){
         }
 		x[caesar]+=frequency;
 	}
-    cout<<caesarname<<endl;
     vector<pair<char,int>>caesar(x.begin(),x.end());
     x.clear();
     sort(caesar.begin(),caesar.end(),sortmap);
@@ -610,8 +618,6 @@ void KOKUSEN(){
     if(Gojotable.empty()){
         return;
     }
-    cout<<"BEFORE KOKUSEN"<<endl;
-    printAllCustomers();
     for(auto area: Gojotable){
         vector<int>postorder = BSTtoPostOrder(area.second);
         reverse(postorder.begin(), postorder.end());
@@ -619,8 +625,6 @@ void KOKUSEN(){
         int Y=counthoanvi(postorder,fact);
         remove(area.first,Y);
     }
-    cout<<"AFTER KOKUSEN"<<endl;
-    printAllCustomers();
 }
 void KEITEIKEN(int NUM){
     vector<SKNode> keiteiken;
@@ -690,49 +694,36 @@ void simulate(string filename)
 		{
 			ss >> maxsize;
 			MAXSIZE = stoi(maxsize);
-			cout << "MAXSIZE: ";
-			cout << MAXSIZE << endl;
 		}
 		else if (str == "LAPSE")
 		{
 			ss >> name;
-			cout << "LAPSE";
-			cout << " ";
-			cout << name << endl;
 			LAPSE(name);
 		}
 		else if (str == "HAND")
 		{
-			cout << "HAND" << endl;
 			HAND();
 		}
 		else if (str == "LIMITLESS")
 		{
 			ss >> num;
 			int n = stoi(num);
-			cout << "LIMITLESS ";
-			cout << n << endl;
 			LIMITLESS(n);
 		}
 		else if (str == "CLEAVE")
 		{
 			ss >> num;
 			int n = stoi(num);
-			cout << "CLEAVE ";
-			cout << n << endl;
 			CLEAVE(n);
 		}
 		else if (str == "KEITEIKEN")
 		{
 			ss >> num;
 			int n = stoi(num);
-			cout << "KEITEIKEN ";
-			cout << n << endl;
 			KEITEIKEN(n);
 		}
 		else if (str == "KOKUSEN")
 		{
-			cout << "KOKUSEN" << endl;
 			KOKUSEN();
 		}
 	}
