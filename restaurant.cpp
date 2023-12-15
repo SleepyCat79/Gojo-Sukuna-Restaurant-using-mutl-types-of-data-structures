@@ -440,7 +440,7 @@ void getinres(int result){
 //stuff for Kokusen
 void factorial(int fact[],int n){
     fact[0]=1;
-    for(int i =1;i<=n;i++){
+    for(long long int i =1;i<=n;i++){
         fact[i]=fact[i-1]*i;
     }
 }
@@ -542,7 +542,7 @@ void KOKUSEN(){
             continue;
         }
         vector<int>postorder = BSTtoPostOrder(area.second);
-        swap(postorder[0],postorder[postorder.size()-1]);
+        reverse(postorder.begin(), postorder.end());
         int fact[postorder.size()];
         int Y=counthoanvi(postorder,fact);
         remove(area.first,Y);
