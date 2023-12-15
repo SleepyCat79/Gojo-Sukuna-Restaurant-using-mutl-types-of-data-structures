@@ -4,7 +4,6 @@ int MAXSIZE;
 class GojoBST {
 public:
     int key;
-    int num;
     GojoBST* left;
     GojoBST* right;
     std::chrono::steady_clock::time_point order;
@@ -26,11 +25,10 @@ GojoBST* insert(GojoBST* root,int key){
 void tablegetin(int result,int id){
     if(Gojotable.find(id)==Gojotable.end()){
         Gojotable[id]=new GojoBST(result);
-        Gojotable[id]->num=1;
     }
     else{
         Gojotable[id]=insert(Gojotable[id], result);
-        Gojotable[id]->num++;
+
     }
 }
 void printBST(GojoBST* root) {
@@ -100,19 +98,31 @@ GojoBST *delNode(GojoBST *root, int tmp)
 		return root;
 	}
 }
+void countNodes(GojoBST* root, int& count) {
+    if (root != nullptr) {
+        countNodes(root->left, count);
+        count++;
+        countNodes(root->right, count);
+    }
+}
+
+int getNumberOfNodesInArea(int area) {
+    int count = 0;
+    if (Gojotable.find(area) != Gojotable.end()) {
+        countNodes(Gojotable[area], count);
+    }
+    return count;
+}
 void remove(int ID,int Y){
-    int n = Gojotable[ID]->num;
+    int n = getNumberOfNodesInArea(ID);
 	if (n <= Y)
 	{
-        cout<<"A"<<endl;
 		GojoBST *tmp = Gojotable[ID];
-        Gojotable[ID]->num=0;
 		Gojotable[ID] = nullptr;
 		delete tmp;
 	}
 	else
 	{
-        cout<<"B"<<endl;
         vector<pair<int, std::chrono::steady_clock::time_point>> nodes;
         if (Gojotable.find(ID) != Gojotable.end()) {
         getNodesInOrder(Gojotable[ID], nodes);
@@ -123,7 +133,6 @@ void remove(int ID,int Y){
 		for (int i = 0; i < Y; i++)
 		{
 			Gojotable[ID] = delNode(Gojotable[ID], nodes[0].first);
-			Gojotable[ID]->num--;
 			nodes.erase(nodes.begin() + 0);
 		}
 	}
