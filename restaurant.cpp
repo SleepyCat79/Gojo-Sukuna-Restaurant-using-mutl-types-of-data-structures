@@ -173,20 +173,20 @@ class minHeap{
 	int largest = i;
 	int left = 2 * i + 1;
 	int right = 2 * i + 2;
-	if (left < heap.size() && heap[left]->num < heap[largest]->num)
+	if (left < int(heap.size()) && heap[left]->num < heap[largest]->num)
 	{
 		largest = left;
 	}
-    else if(left < heap.size() && heap[left]->num == heap[largest]->num){
+    else if(left < int(heap.size()) && heap[left]->num == heap[largest]->num){
         if(heap[left]->lastuse < heap[largest]->lastuse){
             largest = left;
         }
     }
-	if (right < heap.size() && heap[right]->num < heap[largest]->num)
+	if (right < int(heap.size()) && heap[right]->num < heap[largest]->num)
 	{
 		largest = right;
 	}
-    else if(right < heap.size() && heap[right]->num == heap[largest]->num){
+    else if(right < int(heap.size()) && heap[right]->num == heap[largest]->num){
         if(heap[right]->lastuse < heap[largest]->lastuse){
             largest = right;
         }
@@ -198,7 +198,7 @@ class minHeap{
 	}
 }
     void waytopreorder(int i, vector<SKNode*>& result) {
-        if (i >= heap.size()) {
+        if (i >= int(heap.size())) {
             return;
         }
         result.push_back(heap[i]);
