@@ -383,29 +383,48 @@ struct CompareNodes
 		}
 	}
 };
-HuffmanNode *reBalance(HuffmanNode *root, int &count)
+HuffmanNode *reBalance(HuffmanNode *root, int &count, bool &check)
 {
 	if (root == nullptr)
 	{
 		return root;
 	}
-	if (count == 0)
+	if (count == 0 || check)
 	{
 		return root;
 	}
 	while (count > 0)
 	{
-		int balance = getBalance(root);
+		int balance = getHeight(root->left) - getHeight(root->right);
 		if (abs(balance) > 1)
 		{
 			root = rotate(root);
 			count--;
+			check = true;
+			return root;
 		}
 		else
 			break;
 	}
-	root->left = reBalance(root->left, count);
-	root->right = reBalance(root->right, count);
+	root->left = reBalance(root->left, count, check);
+	root->right = reBalance(root->right, count, check);
+	return root;
+}
+HuffmanNode *turn_back_root(HuffmanNode *root, int &count)
+{
+	bool check = false;
+	while (true)
+	{
+		root = reBalance(root, count, check);
+		if (count == 0 || check == false)
+		{
+			break;
+		}
+		else
+		{
+			check = false;
+		}
+	}
 	return root;
 }
 HuffmanNode* buildHuffmanTree(vector<pair<char,int>>&frequencymap) {
@@ -424,12 +443,9 @@ HuffmanNode* buildHuffmanTree(vector<pair<char,int>>&frequencymap) {
         HuffmanNode* internalNode = new HuffmanNode('\0', leftChild->frequency + rightChild->frequency,ordercount);
         internalNode->left = leftChild;
         internalNode->right = rightChild;
-        internalNode=rotate(internalNode);
-        internalNode->left=rotate(internalNode->left);
-        internalNode->right=rotate(internalNode->right);
-        int rotatetime = 3;
-        internalNode= reBalance(internalNode,rotatetime);
-        internalNode->order=ordercount;
+        int countRotate = 3;
+		internalNode = turn_back_root(internalNode, countRotate);
+		internalNode->order = ordercount;
         if (internalNode->data != '\0')
 		{
 			return nullptr;
